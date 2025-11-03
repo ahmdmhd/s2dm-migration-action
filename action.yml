@@ -3,6 +3,10 @@ description: 'Automated migration workflow for S2DM specifications'
 author: 'COVESA'
 
 inputs:
+  repository-path:
+    description: 'Path to the git repository root'
+    required: true
+
   spec-path:
     description: 'Path to the spec directory'
     required: false
@@ -228,6 +232,7 @@ runs:
 
     - name: Bump version and push tags
       if: steps.version-check.outputs.CONTINUE == 'true'
+      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         git config --local user.email "action@github.com"
@@ -238,6 +243,7 @@ runs:
     - name: Get latest tag
       if: steps.version-check.outputs.CONTINUE == 'true'
       id: get-latest-tag
+      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         LATEST_TAG=$(git describe --tags --abbrev=0)
@@ -245,6 +251,7 @@ runs:
 
     - name: Create release
       if: steps.version-check.outputs.CONTINUE == 'true'
+      working-directory: ${{ inputs.repository-path }}
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
       shell: bash
