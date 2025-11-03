@@ -22,6 +22,11 @@ inputs:
     required: false
     default: 'main'
 
+  s2dm-path:
+    description: 'Path where S2DM repository will be checked out'
+    required: false
+    default: 's2dm'
+
   concept-namespace:
     description: 'Concept namespace for registry'
     required: false
@@ -93,7 +98,7 @@ runs:
       with:
         repository: ${{ inputs.s2dm-repository }}
         ref: ${{ inputs.s2dm-version }}
-        path: s2dm
+        path: ${{ inputs.s2dm-path }}
 
     - name: Install Python
       uses: actions/setup-python@v5
@@ -106,7 +111,7 @@ runs:
         version: "latest"
 
     - name: Install S2DM dependencies
-      working-directory: s2dm
+      working-directory: ${{ inputs.s2dm-path }}
       shell: bash
       run: |
         uv sync --frozen
@@ -114,7 +119,7 @@ runs:
     - name: Activate venv
       shell: bash
       run: |
-        echo "${{ github.workspace }}/s2dm/.venv/bin" >> $GITHUB_PATH
+        echo "${{ github.workspace }}/${{ inputs.s2dm-path }}/.venv/bin" >> $GITHUB_PATH
 
     - name: Verify S2DM installation
       shell: bash
