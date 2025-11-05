@@ -143,6 +143,14 @@ runs:
         mkdir -p ${{ github.workspace }}/.previous-release
         gh release download --pattern "*" --dir ${{ github.workspace }}/.previous-release || echo "No previous release found"
 
+    - name: Extract previous release
+      shell: bash
+      run: |
+        if [ -f "${{ github.workspace }}/.previous-release/release.tar.gz" ]; then
+          tar -xzf ${{ github.workspace }}/.previous-release/release.tar.gz -C ${{ github.workspace }}/.previous-release
+          rm ${{ github.workspace }}/.previous-release/release.tar.gz
+        fi
+
     - name: Prepare artifacts
       shell: bash
       run: |
