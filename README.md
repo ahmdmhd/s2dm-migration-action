@@ -40,6 +40,32 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
+### Example with Deploy Key
+
+```yaml
+name: Migration
+on:
+  push:
+    branches: [main]
+    paths: ['spec/**']
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run S2DM migration
+        uses: ahmed/s2dm-migration-action@main
+        with:
+          spec-path: ./spec
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-key: ${{ secrets.DEPLOY_KEY }}
+```
+
 ### Advanced Example with All Options
 
 ```yaml
@@ -63,8 +89,8 @@ jobs:
         with:
           spec-path: ./spec
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          s2dm-repository: COVESA/s2dm
-          s2dm-version: main
+          deploy-key: ${{ secrets.DEPLOY_KEY }}
+          s2dm-path: s2dm
           concept-namespace: 'https://example.com/concepts/'
           concept-prefix: 'ex'
           shacl-serialization-format: 'turtle'
@@ -81,10 +107,11 @@ jobs:
 
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
+| `repository-path` | Path to the git repository root | Yes | - |
 | `spec-path` | Path to the spec directory | No | `./spec` |
-| `github-token` | GitHub token for creating releases | Yes | - |
-| `s2dm-repository` | S2DM repository to use | No | `COVESA/s2dm` |
-| `s2dm-version` | S2DM version (branch, tag, or commit) | No | `main` |
+| `github-token` | GitHub token for creating releases and checking out repositories | Yes | - |
+| `deploy-key` | SSH deploy key for checking out repositories (optional, takes precedence over github-token) | No | `''` |
+| `s2dm-path` | Path where S2DM repository will be checked out | No | `s2dm` |
 | `concept-namespace` | Concept namespace for registry | No | `''` |
 | `concept-prefix` | Concept prefix for registry | No | `''` |
 | `shacl-serialization-format` | SHACL serialization format | No | `''` |
@@ -103,6 +130,41 @@ jobs:
 | `version-bump` | Type of version bump (major, minor, patch, none) |
 | `latest-tag` | The latest git tag after release |
 | `continue` | Whether migration should continue |
+
+## Authentication
+
+The action supports two authentication methods for checking out the S2DM repository:
+
+### Using GitHub Token (Default)
+
+By default, the action uses the `github-token` for both:
+- Checking out the COVESA/s2dm repository
+- Creating releases via GitHub API
+
+```yaml
+- name: Run S2DM migration
+  uses: ahmed/s2dm-migration-action@main
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Using SSH Deploy Key (Optional)
+
+If you provide a `deploy-key`, it will be used for checking out the S2DM repository instead of the token. The `github-token` is still required for creating releases.
+
+```yaml
+- name: Run S2DM migration
+  uses: ahmed/s2dm-migration-action@main
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    deploy-key: ${{ secrets.DEPLOY_KEY }}
+```
+
+### Protected Branches
+
+**Important:** If your branch is protected with push restrictions, you must provide either:
+- A `github-token` with permissions to bypass branch protection, OR
+- A `deploy-key` (SSH key) with permissions to bypass branch protection
 
 ## Requirements
 

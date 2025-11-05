@@ -13,18 +13,13 @@ inputs:
     default: './spec'
 
   github-token:
-    description: 'GitHub token for creating releases'
+    description: 'GitHub token for creating releases and checking out repositories'
     required: true
 
-  s2dm-repository:
-    description: 'S2DM repository to use'
+  deploy-key:
+    description: 'SSH deploy key for checking out repositories (optional, takes precedence over github-token)'
     required: false
-    default: 'COVESA/s2dm'
-
-  s2dm-version:
-    description: 'S2DM version to use (branch, tag, or commit)'
-    required: false
-    default: 'main'
+    default: ''
 
   s2dm-path:
     description: 'Path where S2DM repository will be checked out'
@@ -97,12 +92,21 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout S2DM repository
+    - name: Checkout S2DM repository (with deploy key)
+      if: inputs.deploy-key != ''
       uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.s2dm-repository }}
-        ref: ${{ inputs.s2dm-version }}
+        repository: COVESA/s2dm
         path: ${{ inputs.s2dm-path }}
+        ssh-key: ${{ inputs.deploy-key }}
+
+    - name: Checkout S2DM repository (with token)
+      if: inputs.deploy-key == ''
+      uses: actions/checkout@v4
+      with:
+        repository: COVESA/s2dm
+        path: ${{ inputs.s2dm-path }}
+        token: ${{ inputs.github-token }}
 
     - name: Install Python
       uses: actions/setup-python@v5
@@ -236,8 +240,8 @@ runs:
       working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        git config --local user.email "s2dm-automation-action@covesa.global"
+        git config --local user.name "S2DM Automation Action"
         bump-my-version bump ${{ steps.version-check.outputs.VERSION_BUMP }} --config-file ./.bumpversion.toml
         git push origin ${{ github.ref_name }} --tags
 
