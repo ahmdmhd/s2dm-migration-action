@@ -251,7 +251,8 @@ runs:
         git config --local user.email "s2dm-automation-action@covesa.global"
         git config --local user.name "S2DM Automation Action"
         bump-my-version bump ${{ steps.version-check.outputs.VERSION_BUMP }} --config-file ./.bumpversion.toml
-        git push origin ${{ github.ref_name }} --tags
+        git push origin ${{ github.ref_name }}
+        git push origin --tags
 
     - name: Get latest tag
       if: steps.version-check.outputs.CONTINUE == 'true'
