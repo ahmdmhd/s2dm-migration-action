@@ -40,32 +40,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-### Example with Deploy Key
-
-```yaml
-name: Migration
-on:
-  push:
-    branches: [main]
-    paths: ['spec/**']
-
-jobs:
-  migrate:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run S2DM migration
-        uses: ahmed/s2dm-migration-action@main
-        with:
-          spec-path: ./spec
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-key: ${{ secrets.DEPLOY_KEY }}
-```
-
 ### Advanced Example with All Options
 
 ```yaml
@@ -89,7 +63,6 @@ jobs:
         with:
           spec-path: ./spec
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-key: ${{ secrets.DEPLOY_KEY }}
           s2dm-path: s2dm
           concept-namespace: 'https://example.com/concepts/'
           concept-prefix: 'ex'
@@ -109,8 +82,7 @@ jobs:
 |-------|-------------|----------|---------|
 | `repository-path` | Path to the git repository root | Yes | - |
 | `spec-path` | Path to the spec directory | No | `./spec` |
-| `github-token` | GitHub token for creating releases and checking out repositories | Yes | - |
-| `deploy-key` | SSH deploy key for checking out repositories (optional, takes precedence over github-token) | No | `''` |
+| `github-token` | GitHub token for creating releases | Yes | - |
 | `s2dm-path` | Path where S2DM repository will be checked out | No | `s2dm` |
 | `concept-namespace` | Concept namespace for registry | No | `''` |
 | `concept-prefix` | Concept prefix for registry | No | `''` |
@@ -133,13 +105,9 @@ jobs:
 
 ## Authentication
 
-The action supports two authentication methods for checking out the S2DM repository:
+### For Creating Releases
 
-### Using GitHub Token (Default)
-
-By default, the action uses the `github-token` for both:
-- Checking out the COVESA/s2dm repository
-- Creating releases via GitHub API
+The action requires a `github-token` to create releases in your repository. You can use the default `GITHUB_TOKEN` provided by GitHub Actions:
 
 ```yaml
 - name: Run S2DM migration
@@ -148,23 +116,32 @@ By default, the action uses the `github-token` for both:
     github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-### Using SSH Deploy Key (Optional)
+### For Pushing to Your Repository
 
-If you provide a `deploy-key`, it will be used for checking out the S2DM repository instead of the token. The `github-token` is still required for creating releases.
+The action pushes version bumps and tags to your repository. When you checkout your repository **before** calling the action, you must use credentials with push permissions:
 
+**For unprotected branches:**
 ```yaml
-- name: Run S2DM migration
-  uses: ahmed/s2dm-migration-action@main
+- name: Checkout repository
+  uses: actions/checkout@v4
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
-    deploy-key: ${{ secrets.DEPLOY_KEY }}
+    path: my-repo
+    # Default GITHUB_TOKEN is sufficient
 ```
 
-### Protected Branches
+**For protected branches with push restrictions:**
 
-**Important:** If your branch is protected with push restrictions, you must provide either:
-- A `github-token` with permissions to bypass branch protection, OR
-- A `deploy-key` (SSH key) with permissions to bypass branch protection
+You need to use credentials that can bypass branch protection:
+
+```yaml
+- name: Checkout repository
+  uses: actions/checkout@v4
+  with:
+    path: my-repo
+    token: ${{ secrets.PAT_TOKEN }}  # Token with bypass permissions
+    # OR
+    ssh-key: ${{ secrets.DEPLOY_KEY }}  # Deploy key with bypass permissions
+```
 
 ## Requirements
 

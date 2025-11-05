@@ -13,13 +13,8 @@ inputs:
     default: './spec'
 
   github-token:
-    description: 'GitHub token for creating releases and checking out repositories'
+    description: 'GitHub token for creating releases'
     required: true
-
-  deploy-key:
-    description: 'SSH deploy key for checking out repositories (optional, takes precedence over github-token)'
-    required: false
-    default: ''
 
   s2dm-path:
     description: 'Path where S2DM repository will be checked out'
@@ -92,21 +87,11 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout S2DM repository (with deploy key)
-      if: inputs.deploy-key != ''
+    - name: Checkout S2DM repository
       uses: actions/checkout@v4
       with:
         repository: COVESA/s2dm
         path: ${{ inputs.s2dm-path }}
-        ssh-key: ${{ inputs.deploy-key }}
-
-    - name: Checkout S2DM repository (with token)
-      if: inputs.deploy-key == ''
-      uses: actions/checkout@v4
-      with:
-        repository: COVESA/s2dm
-        path: ${{ inputs.s2dm-path }}
-        token: ${{ inputs.github-token }}
 
     - name: Install Python
       uses: actions/setup-python@v5
