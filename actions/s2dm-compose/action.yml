@@ -82,7 +82,6 @@ runs:
 
     - name: Compose GraphQL schema
       id: compose
-      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         s2dm compose -s ${{ inputs.spec-path }} -o ${{ inputs.output-path }}
@@ -115,7 +114,6 @@ runs:
     - name: Check version bump
       if: inputs.create-release == 'true'
       id: version-check
-      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         VERSION_BUMP=major
