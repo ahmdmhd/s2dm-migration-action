@@ -1,5 +1,5 @@
-name: 'S2DM Migration'
-description: 'Automated migration workflow for S2DM specifications'
+name: 'S2DM Publish'
+description: 'Automated artifact generation and publishing workflow through S2DM'
 author: 'COVESA'
 
 inputs:
@@ -170,18 +170,6 @@ runs:
       run: |
         s2dm units sync
 
-    - name: Compose GraphQL schema
-      if: steps.version-check.outputs.CONTINUE == 'true'
-      shell: bash
-      run: |
-        s2dm compose -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.artifacts/graphql/schema.graphql
-
-    - name: Generate JSON schema
-      if: steps.version-check.outputs.CONTINUE == 'true'
-      shell: bash
-      run: |
-        s2dm export jsonschema -S -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.artifacts/jsonschema/schema.json
-
     - name: Initialize registry
       if: steps.version-check.outputs.CONTINUE == 'true' && steps.version-check.outputs.IS_INITIAL_RELEASE == 'true'
       shell: bash
@@ -199,6 +187,18 @@ runs:
         [ -n "${{ inputs.concept-namespace }}" ] && CMD="$CMD --concept-namespace '${{ inputs.concept-namespace }}'"
         [ -n "${{ inputs.concept-prefix }}" ] && CMD="$CMD --concept-prefix '${{ inputs.concept-prefix }}'"
         eval "$CMD"
+
+    - name: Compose GraphQL schema
+      if: steps.version-check.outputs.CONTINUE == 'true'
+      shell: bash
+      run: |
+        s2dm compose -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.artifacts/graphql/schema.graphql
+
+    - name: Generate JSON schema
+      if: steps.version-check.outputs.CONTINUE == 'true'
+      shell: bash
+      run: |
+        s2dm export jsonschema -S -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.artifacts/jsonschema/schema.json
 
     - name: Generate SHACL
       if: steps.version-check.outputs.CONTINUE == 'true'
@@ -259,5 +259,5 @@ runs:
         tar -czf release.tar.gz -C ${{ github.workspace }}/.artifacts .
         gh release create "${LATEST_TAG}" \
           --title "Release ${LATEST_TAG}" \
-          --notes "This release contains the artifacts from the automated migration workflow." \
+          --notes "This release contains the artifacts from the automated publishing workflow." \
           release.tar.gz
