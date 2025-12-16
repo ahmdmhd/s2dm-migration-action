@@ -8,14 +8,9 @@ inputs:
     required: true
 
   spec-path:
-    description: 'Path to the spec directory'
+    description: 'Path to the spec directory relative to the root of the repository'
     required: false
     default: 'spec'
-
-  output-path:
-    description: 'Output path for the composed schema'
-    required: false
-    default: 'schema.graphql'
 
   create-release:
     description: 'Whether to create a GitHub release with the composed schema'
@@ -80,12 +75,18 @@ runs:
       run: |
         s2dm --help
 
-    - name: Compose GraphQL schema
-      id: compose
+    - name: Prepare temp directory
       shell: bash
       run: |
-        s2dm compose -s ${{ inputs.spec-path }} -o ${{ inputs.output-path }}
-        echo "SCHEMA_PATH=${{ inputs.output-path }}" >> "$GITHUB_OUTPUT"
+        mkdir -p ${{ github.workspace }}/.s2dm-compose
+
+    - name: Compose GraphQL schema
+      id: compose
+      working-directory: ${{ inputs.repository-path }}
+      shell: bash
+      run: |
+        s2dm compose -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.s2dm-compose/schema.graphql
+        echo "SCHEMA_PATH=${{ github.workspace }}/.s2dm-compose/schema.graphql" >> "$GITHUB_OUTPUT"
 
     - name: Validate release prerequisites
       if: inputs.create-release == 'true'
@@ -165,4 +166,4 @@ runs:
         gh release create "${LATEST_TAG}" \
           --title "Release ${LATEST_TAG}" \
           --notes "This release contains the composed GraphQL schema." \
-          ${{ inputs.output-path }}
+          ${{ github.workspace }}/.s2dm-compose/schema.graphql

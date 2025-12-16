@@ -36,7 +36,6 @@ jobs:
         with:
           repository-path: .
           spec-path: spec
-          output-path: schema.graphql
 ```
 
 ### With Release Creation
@@ -68,7 +67,6 @@ jobs:
         with:
           repository-path: .
           spec-path: spec
-          output-path: schema.graphql
           create-release: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -82,7 +80,6 @@ jobs:
   with:
     repository-path: .
     spec-path: spec
-    output-path: schema.graphql
     create-release: 'true'
     github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -91,6 +88,11 @@ jobs:
     echo "Schema path: ${{ steps.compose.outputs.composed-schema-path }}"
     echo "Version bump: ${{ steps.compose.outputs.version-bump }}"
     echo "Latest tag: ${{ steps.compose.outputs.latest-tag }}"
+
+- name: Use the composed schema
+  run: |
+    # The schema is available at the path from the output
+    cat "${{ steps.compose.outputs.composed-schema-path }}"
 ```
 
 ## Inputs
@@ -98,8 +100,7 @@ jobs:
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
 | `repository-path` | Path to the git repository root | Yes | - |
-| `spec-path` | Path to the spec directory | No | `spec` |
-| `output-path` | Output path for the composed schema | No | `schema.graphql` |
+| `spec-path` | Path to the spec directory relative to repository root | No | `spec` |
 | `create-release` | Whether to create a GitHub release | No | `false` |
 | `github-token` | GitHub token for creating releases | No* | `''` |
 | `s2dm-path` | Path where S2DM repository will be checked out | No | `s2dm` |
@@ -132,8 +133,8 @@ jobs:
 
 1. Checks out the S2DM repository
 2. Installs dependencies
-3. Composes GraphQL schemas into a single file
-4. Outputs the path to the composed schema
+3. Composes GraphQL schemas into a single file at a temporary location
+4. Outputs the absolute path to the composed schema
 
 ### Compose + Release Mode (create-release: true)
 
