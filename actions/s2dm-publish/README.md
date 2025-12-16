@@ -86,7 +86,7 @@ jobs:
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
 | `repository-path` | Path to the git repository root | Yes | - |
-| `spec-path` | Path to the spec directory | No | `./spec` |
+| `spec-path` | Path to the spec directory relative to the root of the repository | No | `./spec` |
 | `github-token` | GitHub token for creating releases | Yes | - |
 | `s2dm-path` | Path where S2DM repository will be checked out | No | `s2dm` |
 | `concept-namespace` | Concept namespace for registry | No | `''` |

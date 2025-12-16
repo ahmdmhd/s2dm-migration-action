@@ -8,7 +8,7 @@ inputs:
     required: true
 
   spec-path:
-    description: 'Path to the spec directory'
+    description: 'Path to the spec directory relative to the root of the repository'
     required: false
     default: './spec'
 
@@ -148,6 +148,7 @@ runs:
 
     - name: Check spec version bump
       id: version-check
+      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         VERSION_BUMP=major
@@ -166,12 +167,14 @@ runs:
 
     - name: Sync units
       if: steps.version-check.outputs.CONTINUE == 'true'
+      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         s2dm units sync
 
     - name: Initialize registry
       if: steps.version-check.outputs.CONTINUE == 'true' && steps.version-check.outputs.IS_INITIAL_RELEASE == 'true'
+      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         CMD="s2dm registry init -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.artifacts/registry/registry.json"
@@ -181,6 +184,7 @@ runs:
 
     - name: Update registry
       if: steps.version-check.outputs.CONTINUE == 'true' && steps.version-check.outputs.IS_INITIAL_RELEASE != 'true'
+      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         CMD="s2dm registry update -s ${{ inputs.spec-path }} -sh ${{ github.workspace }}/.previous-release/registry/registry.json -o ${{ github.workspace }}/.artifacts/registry/registry.json"
@@ -190,18 +194,21 @@ runs:
 
     - name: Compose GraphQL schema
       if: steps.version-check.outputs.CONTINUE == 'true'
+      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         s2dm compose -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.artifacts/graphql/schema.graphql
 
     - name: Generate JSON schema
       if: steps.version-check.outputs.CONTINUE == 'true'
+      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         s2dm export jsonschema -S -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.artifacts/jsonschema/schema.json
 
     - name: Generate SHACL
       if: steps.version-check.outputs.CONTINUE == 'true'
+      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         CMD="s2dm export shacl -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.artifacts/shacl/schema.ttl"
@@ -214,6 +221,7 @@ runs:
 
     - name: Generate SKOS RDF
       if: steps.version-check.outputs.CONTINUE == 'true'
+      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         CMD="s2dm generate skos-skeleton -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.artifacts/skos/schema.ttl"
@@ -224,6 +232,7 @@ runs:
 
     - name: Generate VSpec
       if: steps.version-check.outputs.CONTINUE == 'true'
+      working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
         s2dm export vspec -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.artifacts/vspec/schema.vspec
