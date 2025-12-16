@@ -120,7 +120,6 @@ runs:
         s2dm --help
 
     - name: Download latest release
-      working-directory: ${{ inputs.repository-path }}
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
       shell: bash
@@ -152,14 +151,14 @@ runs:
       shell: bash
       run: |
         VERSION_BUMP=major
-        if [ -d "${{ github.workspace }}/.previous-release" ] && [ "$(ls -A ${{ github.workspace }}/.previous-release)" ]; then
-          echo "Previous release found"
+        if [ -f "${{ github.workspace }}/.previous-release/graphql/schema.graphql" ]; then
+          echo "Previous schema found"
           VERSION_BUMP=$(s2dm check version-bump -s ${{ inputs.spec-path }} -p ${{ github.workspace }}/.previous-release/graphql/schema.graphql --output-type | tail -n 1)
           if [[ "$VERSION_BUMP" != "none" ]]; then
             echo "CONTINUE=true" >> "$GITHUB_OUTPUT"
           fi
         else
-          echo "No previous release found"
+          echo "No previous schema found"
           echo "IS_INITIAL_RELEASE=true" >> "$GITHUB_OUTPUT"
           echo "CONTINUE=true" >> "$GITHUB_OUTPUT"
         fi
@@ -187,6 +186,12 @@ runs:
       working-directory: ${{ inputs.repository-path }}
       shell: bash
       run: |
+        if [ ! -f "${{ github.workspace }}/.previous-release/registry/registry.json" ]; then
+          echo "ERROR: Previous registry file not found at ${{ github.workspace }}/.previous-release/registry/registry.json"
+          echo "Cannot update registry without previous version. This indicates an inconsistent release state."
+          exit 1
+        fi
+
         CMD="s2dm registry update -s ${{ inputs.spec-path }} -sh ${{ github.workspace }}/.previous-release/registry/registry.json -o ${{ github.workspace }}/.artifacts/registry/registry.json"
         [ -n "${{ inputs.concept-namespace }}" ] && CMD="$CMD --concept-namespace '${{ inputs.concept-namespace }}'"
         [ -n "${{ inputs.concept-prefix }}" ] && CMD="$CMD --concept-prefix '${{ inputs.concept-prefix }}'"
