@@ -87,6 +87,22 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Validate spec directory
+      working-directory: ${{ inputs.repository-path }}
+      shell: bash
+      run: |
+        if [ ! -d "${{ inputs.spec-path }}" ]; then
+          echo "ERROR: Spec directory '${{ inputs.spec-path }}' not found"
+          exit 1
+        fi
+
+        if ! find "${{ inputs.spec-path }}" -type f -name "*.graphql" | grep -q .; then
+          echo "ERROR: No .graphql files found in spec directory '${{ inputs.spec-path }}'"
+          exit 1
+        fi
+
+        echo "Spec directory validated successfully"
+
     - name: Checkout S2DM repository
       uses: actions/checkout@v4
       with:
