@@ -368,56 +368,56 @@ runs:
           echo "Diff file not generated (no previous schema or error)"
         fi
 
-    - name: Initialize registry
-      if: steps.version-check.outputs.CONTINUE == 'true' && steps.version-check.outputs.IS_INITIAL_RELEASE == 'true'
-      working-directory: ${{ inputs.repository-path }}
-      shell: bash
-      run: |
-        LATEST_TAG="${{ steps.get-latest-tag.outputs.LATEST_TAG }}"
-        echo "Initializing registry with version tag: $LATEST_TAG"
+    # - name: Initialize registry
+    #   if: steps.version-check.outputs.CONTINUE == 'true' && steps.version-check.outputs.IS_INITIAL_RELEASE == 'true'
+    #   working-directory: ${{ inputs.repository-path }}
+    #   shell: bash
+    #   run: |
+    #     LATEST_TAG="${{ steps.get-latest-tag.outputs.LATEST_TAG }}"
+    #     echo "Initializing registry with version tag: $LATEST_TAG"
 
-        CMD="s2dm registry init -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.artifacts/registry/registry.json --version-tag $LATEST_TAG"
-        [ -n "${{ inputs.concept-namespace }}" ] && CMD="$CMD --concept-namespace '${{ inputs.concept-namespace }}'"
-        [ -n "${{ inputs.concept-prefix }}" ] && CMD="$CMD --concept-prefix '${{ inputs.concept-prefix }}'"
-        eval "$CMD"
+    #     CMD="s2dm registry init -s ${{ inputs.spec-path }} -o ${{ github.workspace }}/.artifacts/registry/registry.json --version-tag $LATEST_TAG"
+    #     [ -n "${{ inputs.concept-namespace }}" ] && CMD="$CMD --concept-namespace '${{ inputs.concept-namespace }}'"
+    #     [ -n "${{ inputs.concept-prefix }}" ] && CMD="$CMD --concept-prefix '${{ inputs.concept-prefix }}'"
+    #     eval "$CMD"
 
-    - name: Update registry
-      if: steps.version-check.outputs.CONTINUE == 'true' && steps.version-check.outputs.IS_INITIAL_RELEASE != 'true' && steps.generate-diff.outputs.HAS_CHANGES == 'true'
-      working-directory: ${{ inputs.repository-path }}
-      shell: bash
-      run: |
-        # Use the previous release tag from downloaded artifacts
-        PREV_TAG="${{ steps.download-release.outputs.PREV_TAG }}"
-        LATEST_TAG="${{ steps.get-latest-tag.outputs.LATEST_TAG }}"
+    # - name: Update registry
+    #   if: steps.version-check.outputs.CONTINUE == 'true' && steps.version-check.outputs.IS_INITIAL_RELEASE != 'true' && steps.generate-diff.outputs.HAS_CHANGES == 'true'
+    #   working-directory: ${{ inputs.repository-path }}
+    #   shell: bash
+    #   run: |
+    #     # Use the previous release tag from downloaded artifacts
+    #     PREV_TAG="${{ steps.download-release.outputs.PREV_TAG }}"
+    #     LATEST_TAG="${{ steps.get-latest-tag.outputs.LATEST_TAG }}"
 
-        echo "Using previous tag: $PREV_TAG for registry files"
-        echo "New version tag: $LATEST_TAG"
+    #     echo "Using previous tag: $PREV_TAG for registry files"
+    #     echo "New version tag: $LATEST_TAG"
 
-        PREV_IDS="${{ github.workspace }}/.previous-release/registry/variant_ids_${PREV_TAG}.json"
-        PREV_REGISTRY="${{ github.workspace }}/.previous-release/registry/registry_${PREV_TAG}.json"
+    #     PREV_IDS="${{ github.workspace }}/.previous-release/registry/variant_ids_${PREV_TAG}.json"
+    #     PREV_REGISTRY="${{ github.workspace }}/.previous-release/registry/registry_${PREV_TAG}.json"
 
-        # Fallback to files without version suffix if versioned files don't exist
-        [ ! -f "$PREV_IDS" ] && PREV_IDS="${{ github.workspace }}/.previous-release/registry/variant_ids.json"
-        [ ! -f "$PREV_REGISTRY" ] && PREV_REGISTRY="${{ github.workspace }}/.previous-release/registry/registry.json"
+    #     # Fallback to files without version suffix if versioned files don't exist
+    #     [ ! -f "$PREV_IDS" ] && PREV_IDS="${{ github.workspace }}/.previous-release/registry/variant_ids.json"
+    #     [ ! -f "$PREV_REGISTRY" ] && PREV_REGISTRY="${{ github.workspace }}/.previous-release/registry/registry.json"
 
-        # Diff file is required for registry update (we only run this step if HAS_CHANGES is true)
-        if [ ! -f "${{ github.workspace }}/.artifacts/diff.json" ]; then
-          echo "Error: Diff file is required for registry update but was not found"
-          exit 1
-        fi
+    #     # Diff file is required for registry update (we only run this step if HAS_CHANGES is true)
+    #     if [ ! -f "${{ github.workspace }}/.artifacts/diff.json" ]; then
+    #       echo "Error: Diff file is required for registry update but was not found"
+    #       exit 1
+    #     fi
 
-        CMD="s2dm registry update -s ${{ inputs.spec-path }} -sh $PREV_REGISTRY -o ${{ github.workspace }}/.artifacts/registry/registry.json --previous-ids $PREV_IDS --version-tag $LATEST_TAG --diff-file ${{ github.workspace }}/.artifacts/diff.json"
+    #     CMD="s2dm registry update -s ${{ inputs.spec-path }} -sh $PREV_REGISTRY -o ${{ github.workspace }}/.artifacts/registry/registry.json --previous-ids $PREV_IDS --version-tag $LATEST_TAG --diff-file ${{ github.workspace }}/.artifacts/diff.json"
 
-        [ -n "${{ inputs.concept-namespace }}" ] && CMD="$CMD --concept-namespace '${{ inputs.concept-namespace }}'"
-        [ -n "${{ inputs.concept-prefix }}" ] && CMD="$CMD --concept-prefix '${{ inputs.concept-prefix }}'"
-        eval "$CMD"
+    #     [ -n "${{ inputs.concept-namespace }}" ] && CMD="$CMD --concept-namespace '${{ inputs.concept-namespace }}'"
+    #     [ -n "${{ inputs.concept-prefix }}" ] && CMD="$CMD --concept-prefix '${{ inputs.concept-prefix }}'"
+    #     eval "$CMD"
 
-    - name: Skip registry update (no changes)
-      if: steps.version-check.outputs.CONTINUE == 'true' && steps.version-check.outputs.IS_INITIAL_RELEASE != 'true' && steps.generate-diff.outputs.HAS_CHANGES == 'false'
-      shell: bash
-      run: |
-        echo "No schema changes detected, skipping registry update"
-        echo "Registry files from previous release will be reused"
+    # - name: Skip registry update (no changes)
+    #   if: steps.version-check.outputs.CONTINUE == 'true' && steps.version-check.outputs.IS_INITIAL_RELEASE != 'true' && steps.generate-diff.outputs.HAS_CHANGES == 'false'
+    #   shell: bash
+    #   run: |
+    #     echo "No schema changes detected, skipping registry update"
+    #     echo "Registry files from previous release will be reused"
 
     - name: Abort release (no changes detected)
       if: steps.version-check.outputs.CONTINUE == 'true' && steps.version-check.outputs.IS_INITIAL_RELEASE != 'true' && steps.generate-diff.outputs.HAS_CHANGES == 'false'
